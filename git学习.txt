@@ -1,0 +1,268 @@
+Git 是分布式版本控制工具, 每台电脑都是一个小型代码仓库，两个仓库之间是可以通讯(通讯加密方式是SSH)
+
+1. 关于 SSH Key: 通讯的公钥和私钥(公私钥加密方式)
+   [如何判断是否有公私钥: 在用户目录下存在 .ssh/id_rsa & .ssh/id_rsa.pub 这两个文件就说明有了 SSH Key]
+   a. 创建 SSH Key: ssh-keygen -t rsa -C "yourEmail@example.com"  // 生成公私秘钥(中途一路回车) "lbyx@demo.com"
+     *** 1. id_rsa      是私有秘钥，不能公开出去
+     *** 2. id_rsa.pub  是空开秘钥，可以随便公开出去
+
+2. 关于创建版本库(仓库)。实际上一个文件夹就可以当做一个版本库(仓库)，只是这个文件夹里面会有一个 .git 的隐藏路径
+    正因为有了 .git 这个隐藏路径 才使得 .git 的父级路径有了版本控制的功能
+    a. 创建 .git 文件:  $ git init  在需要纳入版本控制的文件夹下输入该指令.
+
+3. 把文件添加到版本库:
+    首先这里再明确一下，所有的版本控制系统，其实只能跟踪文本文件的改动，比如TXT文件，网页，所有的程序代码等等，Git也不例外。
+    版本控制系统可以告诉你每次的改动，比如在第5行加了一个单词“Linux”，在第8行删了一个单词“Windows”。
+    而图片、视频这些二进制文件，虽然也能由版本控制系统管理，但没法跟踪文件的变化，只能把二进制文件每次改动串起来，
+    也就是只知道图片从100KB改成了120KB，但到底改了啥，版本控制系统不知道，也没法知道。
+
+    但不幸的是，Microsoft的Word格式是二进制格式，因此，版本控制系统是没法跟踪Word文件的改动的，
+    前面我们举的例子只是为了演示，如果要真正使用版本控制系统，就要以纯文本方式编写文件。
+    因为文本是有编码的，比如中文有常用的GBK编码，日文有Shift_JIS编码，如果没有历史遗留问题，
+    强烈建议使用标准的UTF-8编码，所有语言使用同一种编码，既没有冲突，又被所有平台所支持。
+
+    把一个文件放到Git仓库只需要两步。
+    1. $ git add [. / file_name]   // 把文件 添加 到版本库(仓库)的暂存区
+    2. $ git commit -m "消息提示"   // 把文件 提交 到版本库(仓库)的分支(应该是当前分支)
+
+    example:
+    $ git add file1.cpp
+    $ git add file2.cpp file3.cpp
+    $ git commit -m "这次新添加了三个 .cpp 文件"
+
+4. Git 本地仓库结构原理:
+    1. 仓库分区:
+        工作区 --> 暂存区 --> 本地库分支 --> 远端库分支(bare)
+        [ Git 本地仓库结构 ]->   工作区 --> 暂存区 --> 本地库分支
+        [ Git 中央仓库结构 ]->   本地库分支(bare)
+    2. 假设有一个新项目需要做版本控制， /User/jack/project/
+        (物理路径) 工作区:     /User/jack/project/*    (除了 .git 隐藏路径)
+        (物理路径) 本地仓库:   /User/jack/project/.git/*
+        (虚拟分区) 暂存区:     stage (存在于本地仓库)
+        (虚拟分区) 本地库分支:  master(默认主分支) ...
+    3. 基本流程:
+        工作区   ---  add  --->    暂存区(修改缓冲区)
+        暂存区   --- rm --cached --->   工作区
+
+        暂存区   --- commit --->   本地分支
+        本地分支  ---  push  --->  远程分支
+
+5. git 文件冲突问题:
+    Git文件冲突时，Git会自动将冲突的地方标记出来，然后手动修改之后(手动修改需要再次 add commit ) add commit
+    解决冲突就是把 Git 合并失败的文件手动编辑为我们希望的内容，再提交。
+
+
+
+==========================================================================================================
+
+5. Git 相关基本命令:
+    1. 基本指令操作:
+        git init [--bare]                // --bare 指定当前仓库是一个共享的中央仓库
+        git status                       // 查看当前仓库的状态，可以看到那些文件修改过(工作区和暂存区的状态)
+        git diff <file_name>             // 查看某个文件具体的修改内容
+        git add <file_name>...           // 指定的几个改动的文件添加到暂存区里去
+        git add .                        // 将改动的文件添加到暂存区里去
+        git commit -m "快照提示信息"       // 将暂存区里的改动记录到分支里去，相当于给代码保存一个快照！
+        git rm --cached <file_name> 
+
+
+    2. Git 鼓励大量使用分支，分支相关命令:
+        git branch                                         // 查看分支(当前分支前会有 * )
+        git branch <name>                                  // 创建分支
+        git branch -d <name>                               // 删除分支(若这个分支未合并,将会删除失败)
+        git branch -D <name>                               // 删除分支(强制删除未合并的分支)
+        git branch -m <old_name> <new_name>                // 重命名分支
+
+        git checkout <name>                                // 切换分支
+        git checkout -b <name>                             // 创建+切换分支
+        git checkout -b <new-name> <origin_name>           // 从 origin 分支指针处开展一个新分支: new_name
+
+        git merge <name>                                   // 把 name 合并到当前分支(快进式合并，直接将 name 分支指向当前分支)
+        git merge --no-ff <name>                           // 把 name 合并到当前分支(** 建议使用 **)
+
+    3. Git 历史回滚(时光穿梭)
+        git reset --hard <commit_id>     // 回滚到 commit-id，将 commit-id
+        git reset --hard HEAD^           // 将最近 1 次的提交回滚
+        git reset --hard HEAD^^          // 将最近 2 次的提交回滚
+        git reset --hard HEAD^^^         // 将最近 3 次的提交回滚
+        git reset --hard HEAD~3          // 将最近 3 次的提交回滚
+
+    4. Git 日志:
+        git reflog                       // 查看历史执行 Git 命令 和 相关历史信息
+
+        git log --graph                  // 查看历史分支情况 (--graph           图形化显示时间线 )
+                --pretty=oneline         // 查看历史分支情况 (--pretty=oneline  单行显示简介信息 )
+                --abbrev-commit          // 查看历史分支情况 (--abbrev-commit   只显示 commit_id 不重复的前几位 )
+                ...
+
+    5. Git 关联远程仓库
+        git remote                                          // 显示当前拥有几个远端中央仓库
+        git remote add <name> https://IP:PATH_NAME          // 添加一个远端中央仓库
+        git remote add <name> ssh://user@addr:/PATH.git/    // 添加一个远端中央仓库
+
+        ****** example:
+        git remote add origin ssh://sae@10.244.160.219:/Users/a1/Documents/SAE/SW/AT/GitHouse.git
+
+
+    6. 将改动推送到远程仓库
+        git push -u <origin_name> <origin_branch_name>      // 把本地仓库里改动的内容推送到远端里去
+        git push -u origin develop                          // 推送到远程仓库里的 develop 开发分支里去
+        git pull origin develop                             // 将 origin 远程仓库里的 develop 分支的最新代码更新到本地
+
+
+
+
+==========================================================================================================
+
+6. Git 工作流程:
+    版本库里的两条主要分支: (版本库里常设分支始终只有 master 和 develop)
+        master  (正式发布)
+        develop (日常开发)    由 master 分支开展出来，若正式对外发布，就并入 master 分支
+            $  git checkout -b develop master      // 开展 develop 分支
+              ...
+            $  git checkout master                 // 准备发布: 1.切换到 master 分支
+            $  git merge --no-ff develop           // 准备发布: 2.合并到 master 分支
+
+
+    版本库临时分支(属于临时需要)，用完后，应该删除，使得版本库里只有主分支
+        feature (功能分支)     由 develop 分支开展出来，开发完成后并入 develop 分支
+          每个新功能位于一个自己的分支，这样可以push到中央仓库以备份和协作。
+          但功能分支不是从 master 分支上拉出新分支，而是使用 develop 分支作为父分支。当新功能完成时，合并回 develop 分支。
+          新功能提交应该从不直接与 master 分支交互。
+            $  git checkout -b feature-x develop   // 建立临时 feature-x 功能分支
+             ... 功能开发ing ...
+            $  git checkout develop                // 开发完成:  1.切换到 develop 分支
+            $  git merge --no-ff feature-x         // 开发完成:  2.合并到 develop 分支
+            $  git branch -d feature-x             // 开发完成:  3.删除 feature-x 分支
+
+        release (预发布分支)   由 develop 分支开展出来，最后并入 develop 和 master 分支
+          一旦 develop 分支上有了做一次发布（或者说快到了既定的发布日）的足够功能，就从 develop 分支上 fork 一个发布分支。
+          新建的分支用于开始发布循环，所以从这个时间点开始之后新的功能不能再加到这个分支上; 这个分支只应该做 Bug 修复、文档生成和其它面向发布任务。
+          一旦对外发布的工作都完成了，发布分支合并到 master 分支并分配一个版本号打好 Tag。
+          另外，这些从新建发布分支以来的做的修改要合并回 develop 分支。
+            $  git checkout -b release-x develop   // 建立临时 release-x 预发布分支
+             ... 确认没有问题之后，合并到 master 分支
+            $  git checkout master                 // 确认没有问题:  1.切换到 master 分支
+            $  git merge --no-ff release-x         // 确认没有问题:  2.合并到 master 分支
+            $  git tag -a x                        // 确认没有问题:  3.对 master 合并生成的新节点，做一个标签
+            $  git checkout develop                // 确认没有问题:  4.切换到 develop 分支
+            $  git merge --no-ff release-x         // 确认没有问题:  5.合并到 develop 分支
+            $  git branch -d release-x             // 确认没有问题:  6.删除 develop 分支
+
+        fixbug(hotfix)  (修补bug分支)  由 master 分支开展出来，最后并入 develop 和 master 分支
+          Bug 等不及 release 版本就必须马上修 master 赶上线的情况。会从 master 分支出来，完成后 merge 回 master 和 develop
+          维护分支或说是热修复（hotfix）分支用于生成快速给产品发布版本（production releases）打补丁.
+          这是唯一可以直接从master分支fork出来的分支。 修复完成，修改应该马上合并回master分支和develop分支（当前的发布分支）
+          master分支应该用新的版本号打好Tag。
+          为Bug修复使用专门分支，让团队可以处理掉问题而不用打断其它工作或是等待下一个发布循环。
+          你可以把维护分支想成是一个直接在master分支上处理的临时发布。
+            $  git checkout -b fixbug-xx master    // 建立临时 fixbug-xx bug修复分支
+             ... bug修复ing ...
+            $  git checkout master                 // bug修复完成:  1.切换到 master 分支
+            $  git merge --no-ff fixbug-x          // bug修复完成:  2.合并到 master 分支
+            $  git tag -a x                        // bug修复完成:  3.对 master 合并生成的新节点，做一个标签
+            $  git checkout develop                // bug修复完成:  4.切换到 develop 分支
+            $  git merge --no-ff fixbug-x          // bug修复完成:  5.合并到 develop 分支
+            $  git branch -d release-x             // bug修复完成:  6.删除 develop 分支
+
+
+
+==========================================================================================================
+
+1. Git搭建远程中心仓库，并且创建一个 develop 开发分支: (高级: Git 远程仓库添加权限管理)
+    1. 新建远端 bare 中心仓库:
+        server:$  mkdir server.git
+        server:$  cd server.git
+        server:$  git init --bare
+
+    2. 用户端新建私有仓库: 
+        client:$  mkdir client
+        client:$  cd client
+        client:$  git init
+
+
+        client:$  touch README.txt
+        client:$  echo "this is README.txt file" >> README.txt
+        client:$  git add .
+        client:$  git commit -m "创建 README.txt 文件"
+        ...
+
+        # 给远程仓库添加 master 分支
+        client:$  git remote add origin ssh://sae@10.244.160.219:/Users/a1/Documents/SAE/SW/AT/DisplayData.git
+        client:$  git push origin master
+
+    3. 在客户端创建开发分支, 这个分支将会包含了项目的全部历史, 再将 develop 分支 push 到远端中央仓库
+    	# 给远程仓库添加 develop 分支
+        client:$  git branch develop
+        client:$  git push -u origin develop
+
+    **********************************************************************
+
+    4. 其它开发者这时应该克隆中央仓库，建好 develop 分支的跟踪分支
+        client:$  git clone ssh://user@host:/path/ to/repo.git
+        client:$  git checkout -b develop origin/develop
+
+
+2. 程序员A 和 程序员B 开始开发新功能. 他们需要为各自的功能创建相应的分支, 新分支是基于 develop
+    1. 程序员 A 开发新功能:
+        clientA:$  git checkout -b some-feature develop   // 基于 develop 创建 some-feature 分支
+        clientA:$  git add <file>                         // 老套路: 暂存
+        clientA:$  git commit -m "..."                    // 老套路: 提交
+          // 开发ing...
+          // 开发完成!!!
+        clientA:$  git pull origin develop                // 在合并功能前确保 develop 分支是最新的(下载)
+        clientA:$  git checkout develop                   // 切换分支
+        clientA:$  git merge some-feature                 // 合并 some-feature 分支到 develop
+        clientA:$  git push                               // 推送到远程仓库
+        clientA:$  git branch -d some-feature             // 删除 some-feature 分支
+
+    2. 程序员 A 开始发布
+        clientA:$  git checkout -b release-0.1 develop    // 从当前的开发分支创建一个 预发布分支(release-0.1)
+          ... 在 release-*** 分支上 处理预发布版本 ...
+
+    3. 程序员 A 完成发布
+        clientA:$  git checkout master
+        clientA:$  git merge --no-ff release-0.1
+        clientA:$  git push
+        clientA:$  git checkout develop
+        clientA:$  git merge --no-ff release-0.1
+        clientA:$  git push
+        clientA:$  git branch -d release-0.1
+        clientA:$  git tag -a 0.1 -m "发布版本 0.1" master
+        clientA:$  git push --tags
+
+3. Bug 维护:
+    client:$  git checkout -b issue-#001 master
+      ... bug 修复中...
+    client:$  git checkout master
+    client:$  git merge issue-#001
+    client:$  git push
+    client:$  git checkout develop
+    client:$  git merge issue-#001
+    client:$  git push
+    client:$  git branch -d issue-#001
+
+
+==========================================================================================================
+
+** 创建 bare 仓库时可能会出现的问题:
+    这里可能会有两个小错误:
+      A:
+        *** Please tell me who you are.
+        Run
+
+          git config --global user.email "you@example.com"
+          git config --global user.name "Your Name"
+
+        to set your account's default identity.
+        Omit --global to set the identity only in this repository.
+        fatal: unable to auto-detect email address (got 'lbyx@lbyxdeMac-mini.(none)')
+
+        输入:
+        git config --global user.email "lbyx@demo.com"
+        git config --global user.name  "lbyx"
+
+      B:
+        fatal: This operation must be run in a work tree
+
+    添加 readme 文件
